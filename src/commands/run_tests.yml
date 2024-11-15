@@ -1,0 +1,61 @@
+description: |
+  Runs tests, with retries supported
+parameters:
+  pre_test_command:
+    description: |
+      Command to run prior to runnning the test command
+      You can pass environment variables, using the $ syntax e.g. "$PRE_TEST_COMMAND"
+    type: string
+    default: " "
+  test_command:
+    description: |
+      Command to run in order to run the tests
+      You can pass environment variables, using the $ syntax e.g. "$TEST_COMMAND"
+    type: string
+    default: "./gradlew connectedDebugAndroidTest"
+  working_directory:
+    description: Working directory to run the tests in
+    type: string
+    default: "."
+  max_tries:
+    description: Max number of tries. To disable retries, set this to 1.
+    type: integer
+    default: 2
+  retry_interval:
+    description: Duration in seconds to wait before the next try
+    type: integer
+    default: 5
+  no_output_timeout:
+    description: Use this to configure the no_output_timeout value
+    type: string
+    default: 10m
+  pull_data:
+    description: |
+      Whether to pull data after running tests
+    type: boolean
+    default: false
+  pull_data_path:
+    description: |
+      Emulator directory to pull data from
+    type: string
+    default: data
+  pull_data_target:
+    description: |
+      Location to save pulled data
+    type: string
+    default: "."
+steps:
+  - run:
+      environment:
+        PARAM_MAX_TRIES: << parameters.max_tries >>
+        PARAM_TEST_COMMAND: << parameters.test_command >>
+        PARAM_PRE_TEST_COMMAND: << parameters.pre_test_command >>
+        PARAM_RETRY_INTERVAL: << parameters.retry_interval >>
+      name: Run tests with max tries of <<parameters.max_tries>>
+      working_directory: <<parameters.working_directory>>
+      no_output_timeout: <<parameters.no_output_timeout>>
+      command: <<include(scripts/run_tests.sh)>>
+  - when:
+      condition: << parameters.pull_data >>
+      steps:
+        - run: adb pull << parameters.pull_data_path >> << parameters.pull_data_target >>
